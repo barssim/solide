@@ -1,0 +1,3 @@
+for running ReportSender, ActiveMQ must be started
+cd [activemq_install_dir]/bin  
+./activemq start
