@@ -48,17 +48,22 @@ public class Article {
 	public static final String FLD_CHUSERNO = "CHUSERNO";
 	public static final String FLD_CHDTTM = "CHUSERDTTM";
 	public static final String FLD_STATUS = "STATUS";
+	public static final String FLD_RESERVATIONNO = "RESERVATIONNO";
 
 	private PreparedStatement pstInsertRecord = null;
+	private PreparedStatement pstInsertReservation = null;
 	private PreparedStatement pstUpdateRecord = null;
 	private PreparedStatement pstRemoveRecord = null;
+	private PreparedStatement pstRemoveReservation = null;
 	private PreparedStatement pstGetRecordByARTICLEName = null;
 	private PreparedStatement pstGetRecordByOwnerNo = null;
+	private PreparedStatement pstGetRecordByChUserNo = null;
 	private PreparedStatement pstGetRecordByCategoryNo = null;
 	private PreparedStatement pstGetRecordByArticleNo = null;
 	private PreparedStatement pstApdateToReserved = null;
 	private PreparedStatement pstGetRecords = null;
 	private PreparedStatement pstGetReservedRecords = null;
+	private PreparedStatement pstGetReservedRecordsByUserNo = null;
 	private PreparedStatement pstGetNumberOfExitingArticles = null;
 	private PreparedStatement pstGetNumberOfArticlesFromTypeAiles = null;
 	private PreparedStatement pstGetFiltredRecords = null;
@@ -92,6 +97,27 @@ public class Article {
 		pstRemoveRecord.setInt(1, articleBean.getArticleNo());
 		// Execute query and return count of affected rows.
 		return pstRemoveRecord.executeUpdate();
+	}
+	
+	
+	public int removeReservation(DatabaseClass clsDB, ArticleBean articleBean)
+			throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		StringBuilder sbSQL = new StringBuilder();
+
+		// Create SQL statement.
+		sbSQL.append(" DELETE FROM ").append(" tb_reservation ").append(" WHERE ").append(FLD_ARTICLENO + " = ? ");
+		// Log' statement and parameters.
+		if (logLogger.isDebugEnabled()) {
+			logLogger.debug("          SQL : " + sbSQL);
+			logLogger.debug("PARAM for SQL : " + articleBean.getArticleNo());
+		}
+		// Prepare statement, if needed.
+		if (!clsDB.isStatementPrepared(pstRemoveReservation)) {
+			pstRemoveReservation = clsDB.getConnection().prepareStatement(sbSQL.toString());
+		}
+		pstRemoveReservation.setInt(1, articleBean.getArticleNo());
+		// Execute query and return count of affected rows.
+		return pstRemoveReservation.executeUpdate();
 	}
 
 	public int insertRecord(DatabaseClass clsDB, ArticleBean articleBean, int ownerNo)
@@ -424,6 +450,39 @@ public class Article {
 		return pstGetRecordByOwnerNo.executeQuery();
 	}
 
+	public ResultSet getRecordByChUserNo(int chUserNo)
+			throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		// Declaration of method variables.
+		// Logger logLogger = Logger.getLogger("GLSLogger");
+		StringBuilder sbSQL = new StringBuilder();
+
+		// Create SQL statement.
+		sbSQL.append(" SELECT ").append(FLD_ARTICLENO).append(",").append(FLD_NAME).append(",").append(FLD_DESCRIPTION)
+				.append(",").append(FLD_OLD_NEW).append(",").append(FLD_PRICE).append(",").append(FLD_CATEGORYNO)
+				.append(",").append(FLD_IMAGE1).append(",").append(FLD_IMAGE2).append(",").append(FLD_IMAGE3)
+				.append(",").append(FLD_CRUSERNO).append(",").append(FLD_CRDTTM).append(",").append(FLD_CHUSERNO)
+				.append(",").append(FLD_CHDTTM).append(" FROM ").append(" tb_article ").append(" WHERE ")
+				.append(FLD_CHUSERNO + " = ? ").append(" ORDER BY ").append(FLD_CRDTTM).append(" DESC ");
+		;
+
+		// Log' statement and parameter.
+		if (logLogger.isDebugEnabled()) {
+			logLogger.debug("          SQL : " + sbSQL);
+			logLogger.debug("PARAM for SQL : " + chUserNo + ".");
+		}
+
+		// Prepare statement, if needed.
+		if (!clsDB.isStatementPrepared(pstGetRecordByChUserNo)) {
+			pstGetRecordByChUserNo = clsDB.getConnection().prepareStatement(sbSQL.toString());
+		}
+
+		// Set statement parameters.
+		pstGetRecordByChUserNo.setInt(1, chUserNo);
+
+		// Execute query and return ResultSet.
+		return pstGetRecordByChUserNo.executeQuery();
+	}
+	
 	/**
 	 * This method returns a single record, matching a given categoryNo .
 	 *
@@ -552,6 +611,45 @@ public class Article {
 		// Execute query and return ResultSet.
 		pstGetReservedRecords.setString(1, SolideConstants.STATUS_RESERVED);
 		return pstGetReservedRecords.executeQuery();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 */
+	public ResultSet getReservedRecordsByUserNo(int userNo)
+			throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		// Declaration of method variables.
+		// Logger logLogger = Logger.getLogger("GLSLogger");
+		StringBuilder sbSQL = new StringBuilder();
+
+		// Create SQL statement.
+		sbSQL.append(" SELECT ").append(FLD_ARTICLENO).append(",").append(FLD_NAME).append(",").append(FLD_DESCRIPTION)
+				.append(",").append(FLD_OLD_NEW).append(",").append(FLD_PRICE).append(",").append(FLD_CATEGORYNO)
+				.append(",").append(FLD_IMAGE1).append(",").append(FLD_IMAGE2).append(",").append(FLD_IMAGE3)
+				.append(",").append(FLD_CRUSERNO).append(",").append(FLD_CRDTTM).append(",").append(FLD_CHUSERNO)
+				.append(",").append(FLD_CHDTTM).append(" FROM ").append(" tb_article ").append(" WHERE ")
+				.append(FLD_STATUS + " = ? ").append( " AND " ).append(FLD_CHUSERNO + " = ? ").append(" ORDER BY ").append(FLD_CRDTTM).append(" DESC ");
+		;
+
+		// Log' statement and parameter.
+		if (logLogger.isDebugEnabled()) {
+			logLogger.debug("          SQL : " + sbSQL);
+		}
+
+		// Prepare statement, if needed.
+		if (!clsDB.isStatementPrepared(pstGetReservedRecordsByUserNo)) {
+			pstGetReservedRecordsByUserNo = clsDB.getConnection().prepareStatement(sbSQL.toString());
+		}
+
+		// Execute query and return ResultSet.
+		pstGetReservedRecordsByUserNo.setString(1, SolideConstants.STATUS_RESERVED);
+		pstGetReservedRecordsByUserNo.setInt(2, userNo);
+		return pstGetReservedRecordsByUserNo.executeQuery();
 	}
 	/**
 	 * 
@@ -782,6 +880,56 @@ public class Article {
 	}
 
 	/**
+	 * 
+	 * @param clsDB
+	 * @param articleBean
+	 * @param userNo
+	 * @param reservationStatus
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 */
+	public int insertReservation(DatabaseClass clsDB, ArticleBean articleBean, int userNo, String reservationStatus)
+			throws SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		// Declaration of method variables.
+		// Logger logLogger = Logger.getLogger("GLSLogger");
+
+		StringBuilder sbSQL = new StringBuilder();
+
+		// Create SQL statement.
+		sbSQL.append(" INSERT INTO ")
+			 .append(" tb_reservation ")
+			 .append("(")
+			 .append(FLD_ARTICLENO )
+			 .append(" , ")
+			 .append(FLD_CHUSERNO)
+			 .append(" , ")
+			 .append(FLD_CHDTTM)
+			 .append(")").append(" VALUES(  ?, ?, ?) ");
+			
+
+		// Log' statement and parameter.
+		if (logLogger.isDebugEnabled()) {
+			logLogger.debug("          SQL : " + sbSQL);
+			logLogger.debug("PARAM for SQL : " + articleBean.getArticleNo() + "," + userNo + "," + userNo + ".");
+		}
+
+		// Prepare statement, if needed.
+		if (!clsDB.isStatementPrepared(pstInsertReservation)) {
+			pstInsertReservation = clsDB.getConnection().prepareStatement(sbSQL.toString());
+		}
+		// Set statement parameters.
+		pstInsertReservation.setInt(1, articleBean.getArticleNo());
+		pstInsertReservation.setInt(2, userNo);
+		pstInsertReservation.setTimestamp(3, new java.sql.Timestamp(new Date().getTime()));
+
+		// Execute query and return ResultSet.
+		return pstInsertReservation.executeUpdate();
+	}
+	
+	/**
 	 * This method returns filtred records by manufacturer, model, type and oldNew.
 	 *
 	 * <br>
@@ -914,6 +1062,10 @@ public class Article {
 			if (pstUpdateRecord != null) {
 				pstUpdateRecord.close();
 			}
+			if (pstGetReservedRecordsByUserNo != null) {
+				pstGetReservedRecordsByUserNo.close();
+			}
+			
 
 		} finally {
 			super.finalize();

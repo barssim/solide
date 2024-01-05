@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
+
 import article.ArticleFacade;
 import models.UserBean;
 import utils.SolideConstants;
@@ -36,20 +38,24 @@ public class LoginServlet extends HttpServlet {
 			UserBean userBean = new UserBean();
 			userBean.setUserName(username);
 			userBean.setUserpassword(password);
-			LoginFacade loginFacade = new LoginFacade(userBean);			
+			LoginFacade loginFacade = new LoginFacade(userBean);
 			boolean userExist = loginFacade.checkLoginInputUsername();
 			String surname = loginFacade.checkLoginInputPassword();
 			if (userExist && !surname.equals("noBody")) {
- 				request.getSession().setAttribute("loggedInUser", username);
-		        resultMessage = SolideConstants.WELCOMEON_SITE + "  " + surname + "  " + username;
-				request.setAttribute("Message", resultMessage);				
-				if(loginFacade.retrievRole().equals(SolideConstants.DEPOT_MANAGER))
-						{
-					
+				request.getSession().setAttribute("loggedInUser", username);
+				resultMessage = SolideConstants.WELCOMEON_SITE + "  " + surname + "  " + username;
+				request.setAttribute("Message", resultMessage);
+				if (loginFacade.retrievRole().equals(SolideConstants.DEPOT_MANAGER)) {
+
 					getServletContext().getRequestDispatcher("/DepotManager.jsp").forward(request, response);
-						}
-				else {
-					getServletContext().getRequestDispatcher("/mySolide.jsp").forward(request, response);
+				} else {
+					if (request.getSession().getAttribute("articleNo") != null) {
+						resultMessage = SolideConstants.RECOMMANDER;
+						request.setAttribute("Message", resultMessage);
+						getServletContext().getRequestDispatcher("/mySolide.jsp").forward(request, response);
+					} else {
+						getServletContext().getRequestDispatcher("/mySolide.jsp").forward(request, response);
+					}
 				}
 				return;
 			} else {

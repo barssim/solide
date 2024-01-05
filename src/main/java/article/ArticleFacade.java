@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
-
-
 import dbServices.Article;
 import dbServices.User;
 import utils.DatabaseClass;
@@ -40,16 +38,12 @@ public class ArticleFacade {
 			clsUser = new User();
 		}
 	}
-	
-	
 
 	public ArticleFacade() throws InvalidPropertiesFormatException, FileNotFoundException, IOException {
 		if (clsArticle == null) {
 			clsArticle = new Article();
 		}
 	}
-
-
 
 	public int insertNewArticle()
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException, IOException {
@@ -65,25 +59,25 @@ public class ArticleFacade {
 			}
 		}
 
-		articleBean.setArticleNo(NoRanger.getNext( SolideConstants.ARTICLE));
+		articleBean.setArticleNo(NoRanger.getNext(SolideConstants.ARTICLE));
 		DatabaseClass clsDB = clsConfig.clsDB;
 		con = clsDB.getConnection();
 		con.setAutoCommit(false);
 		try {
 			clsArticle.insertRecord(clsDB, articleBean, userNo);
 			NoRanger.incrementNextNo(SolideConstants.ARTICLE);
-			con.commit();			
+			con.commit();
 		}
 
 		catch (Exception ex) {
 			inserted = -1;
 			con.rollback();
 			con.setAutoCommit(true);
-			
-		} 
+
+		}
 		return inserted;
 	}
-	
+
 	/**
 	 * 
 	 * @return
@@ -99,14 +93,14 @@ public class ArticleFacade {
 		int userNo = 0;
 		int locNo = 0;
 		Connection con = null;
-		
+
 		try (ResultSet rs = clsUser.getRecord(userBean)) {
 			if (rs.next()) {
 				locNo = rs.getInt(User.FLD_LOCATIONNO);
 				userNo = rs.getInt(User.FLD_USERNO);
 			}
 		}
-		
+
 //		articleBean.setArticleNo(NoRanger.getNext( SolideConstants.ARTICLE));
 		DatabaseClass clsDB = clsConfig.clsDB;
 		con = clsDB.getConnection();
@@ -117,6 +111,7 @@ public class ArticleFacade {
 			return updated;
 		} else {
 			try {
+				articleBean.setArticleStatus(SolideConstants.STATUS_RESERVED);
 				clsArticle.updateRecord(clsDB, articleBean, userNo);
 				con.commit();
 			}
@@ -137,8 +132,7 @@ public class ArticleFacade {
 		articleRemoved = clsArticle.removeRecord(articleBean);
 		return articleRemoved;
 	}
-	
-	
+
 	/**
 	 * 
 	 * @param articleBean
@@ -150,10 +144,30 @@ public class ArticleFacade {
 	 * 
 	 * @throws SQLException
 	 */
-	public int changeArticleReservation(ArticleBean articleBean, int userNo , String reservationStatus )
+	public int changeArticleReservation(ArticleBean articleBean, int userNo, String reservationStatus)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		DatabaseClass clsDB = clsConfig.clsDB;
-		return clsArticle.changeReservation(clsDB, articleBean, userNo, reservationStatus);
+		Connection con = null;
+		int done = -1;
+
+		con = clsDB.getConnection();
+		con.setAutoCommit(false);
+		try {
+			clsArticle.changeReservation(clsDB, articleBean, userNo, reservationStatus);
+			if (SolideConstants.STATUS_RESERVED.equals(reservationStatus)) {
+				clsArticle.insertReservation(clsDB, articleBean, userNo, reservationStatus);
+				done = 0;
+			} else {
+				clsArticle.removeReservation(clsDB, articleBean);
+				done = 1;
+			}
+			con.commit();
+		} catch (Exception ex) {
+			done = -1;
+			con.rollback();
+			con.setAutoCommit(true);
+		}
+		return done;
 	}
 
 	public List<ArticleBean> fetchMyArticles()
@@ -164,7 +178,7 @@ public class ArticleFacade {
 		try (ResultSet rs = clsArticle.getRecordByOwnerNo(userNo);) {
 			while (rs.next()) {
 				ArticleBean articleBean = new ArticleBean();
-				articleBean.setArticleNo(rs.getInt( Article.FLD_ARTICLENO ));
+				articleBean.setArticleNo(rs.getInt(Article.FLD_ARTICLENO));
 				articleBean.setArticleName(rs.getString(Article.FLD_NAME));
 				articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
 				articleBean.setArticleDescription(rs.getString(Article.FLD_DESCRIPTION));
@@ -173,9 +187,10 @@ public class ArticleFacade {
 				articleBean.setArticleImage1(rs.getString(Article.FLD_IMAGE1));
 				articleBean.setArticleImage2(rs.getString(Article.FLD_IMAGE2));
 				articleBean.setArticleImage3(rs.getString(Article.FLD_IMAGE3));
-				articleBean.setBarcode(utils.BarcodeGenerator.generateBarcode(String.valueOf(rs.getInt( Article.FLD_ARTICLENO ))));
+				articleBean.setBarcode(
+						utils.BarcodeGenerator.generateBarcode(String.valueOf(rs.getInt(Article.FLD_ARTICLENO))));
 				lstArticles.add(articleBean);
-				
+
 			}
 		}
 		return lstArticles;
@@ -193,15 +208,14 @@ public class ArticleFacade {
 	public String getArticleStatus(ArticleBean articleBean)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		String articleStatus = null;
-		try(ResultSet rs = clsArticle.getRecordsByArticleNo(articleBean.getArticleNo()))
-		{
-			if(rs.next())
-			{
+		try (ResultSet rs = clsArticle.getRecordsByArticleNo(articleBean.getArticleNo())) {
+			if (rs.next()) {
 				articleStatus = rs.getString(Article.FLD_STATUS);
 			}
 		}
 		return articleStatus;
 	}
+
 	/**
 	 * 
 	 * @param articleNo
@@ -214,10 +228,8 @@ public class ArticleFacade {
 	public ArticleBean getArticleByArticleNo(int articleNo)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		ArticleBean articleBean = null;
-		try(ResultSet rs = clsArticle.getRecordsByArticleNo(articleNo))
-		{
-			if(rs.next())
-			{
+		try (ResultSet rs = clsArticle.getRecordsByArticleNo(articleNo)) {
+			if (rs.next()) {
 				articleBean = new ArticleBean();
 				articleBean.setArticleNo(articleNo);
 				articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
@@ -232,7 +244,7 @@ public class ArticleFacade {
 		}
 		return articleBean;
 	}
-	
+
 	/**
 	 * 
 	 * @return
@@ -248,7 +260,7 @@ public class ArticleFacade {
 		try (ResultSet rs = clsArticle.getAllNotReservedRecords();) {
 			while (rs.next()) {
 				ArticleBean articleBean = new ArticleBean();
-				articleBean.setArticleNo(rs.getInt( Article.FLD_ARTICLENO ));
+				articleBean.setArticleNo(rs.getInt(Article.FLD_ARTICLENO));
 				articleBean.setArticleName(rs.getString(Article.FLD_NAME));
 				articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
 				articleBean.setArticleDescription(rs.getString(Article.FLD_DESCRIPTION));
@@ -262,7 +274,7 @@ public class ArticleFacade {
 		}
 		return lstArticles;
 	}
-	
+
 	/**
 	 * 
 	 * @return
@@ -270,34 +282,58 @@ public class ArticleFacade {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 * @throws SQLException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public List<ArticleBean> fetchReservedArticles()
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException, IOException {
 		List<ArticleBean> lstArticles = new ArrayList<>();
-		
-		try (ResultSet rs = clsArticle.getReservedRecords();) {
-			while (rs.next()) {
-				ArticleBean articleBean = new ArticleBean();
-				articleBean.setArticleNo(rs.getInt( Article.FLD_ARTICLENO ));
-				articleBean.setArticleName(rs.getString(Article.FLD_NAME));
-				articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
-				articleBean.setArticleDescription(rs.getString(Article.FLD_DESCRIPTION));
-				articleBean.setArticleOldNew(rs.getString(Article.FLD_OLD_NEW));
-				articleBean.setArticlePrice(rs.getInt(Article.FLD_PRICE));
-				articleBean.setArticleImage1(rs.getString(Article.FLD_IMAGE1));
-				articleBean.setArticleImage2(rs.getString(Article.FLD_IMAGE2));
-				articleBean.setArticleImage3(rs.getString(Article.FLD_IMAGE3));
-				articleBean.setBarcode(utils.BarcodeGenerator.generateBarcode(String.valueOf(rs.getInt( Article.FLD_ARTICLENO ))));
-				lstArticles.add(articleBean);
+		int userNo = getUserNo();
+		String role = getUserRole();
+		if (SolideConstants.DEPOT_MANAGER.equals(role)) {
+			try (ResultSet rs = clsArticle.getReservedRecords();) {
+				while (rs.next()) {
+					ArticleBean articleBean = new ArticleBean();
+					articleBean.setArticleNo(rs.getInt(Article.FLD_ARTICLENO));
+					articleBean.setArticleName(rs.getString(Article.FLD_NAME));
+					articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
+					articleBean.setArticleDescription(rs.getString(Article.FLD_DESCRIPTION));
+					articleBean.setArticleOldNew(rs.getString(Article.FLD_OLD_NEW));
+					articleBean.setArticlePrice(rs.getInt(Article.FLD_PRICE));
+					articleBean.setArticleImage1(rs.getString(Article.FLD_IMAGE1));
+					articleBean.setArticleImage2(rs.getString(Article.FLD_IMAGE2));
+					articleBean.setArticleImage3(rs.getString(Article.FLD_IMAGE3));
+					articleBean.setBarcode(
+							utils.BarcodeGenerator.generateBarcode(String.valueOf(rs.getInt(Article.FLD_ARTICLENO))));
+					lstArticles.add(articleBean);
+				}
+			}
+		}
+		else {
+			try (ResultSet rs = clsArticle.getReservedRecordsByUserNo(userNo)) {
+				while (rs.next()) {
+					ArticleBean articleBean = new ArticleBean();
+					articleBean.setArticleNo(rs.getInt(Article.FLD_ARTICLENO));
+					articleBean.setArticleName(rs.getString(Article.FLD_NAME));
+					articleBean.setArticleCategory(rs.getInt(Article.FLD_CATEGORYNO));
+					articleBean.setArticleDescription(rs.getString(Article.FLD_DESCRIPTION));
+					articleBean.setArticleOldNew(rs.getString(Article.FLD_OLD_NEW));
+					articleBean.setArticlePrice(rs.getInt(Article.FLD_PRICE));
+					articleBean.setArticleImage1(rs.getString(Article.FLD_IMAGE1));
+					articleBean.setArticleImage2(rs.getString(Article.FLD_IMAGE2));
+					articleBean.setArticleImage3(rs.getString(Article.FLD_IMAGE3));
+					articleBean.setBarcode(
+							utils.BarcodeGenerator.generateBarcode(String.valueOf(rs.getInt(Article.FLD_ARTICLENO))));
+					lstArticles.add(articleBean);
+				}
 			}
 		}
 		return lstArticles;
 	}
+
 	public int fetchNumberOfArticles()
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		int numberOf = 0;
-		
+
 		try (ResultSet rs = clsArticle.getNumberOfExitingArticles();) {
 			if (rs.next()) {
 				numberOf = rs.getInt(1);
@@ -305,10 +341,11 @@ public class ArticleFacade {
 		}
 		return numberOf;
 	}
+
 	public int fetchNumberOfArticlesFromTypeAiles(int categoryNo)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		int numberOf = 0;
-		
+
 		try (ResultSet rs = clsArticle.getNumberOfArticlesFromTypeAiles(categoryNo);) {
 			if (rs.next()) {
 				numberOf = rs.getInt(1);
@@ -350,6 +387,32 @@ public class ArticleFacade {
 			ex.printStackTrace();
 		}
 		return userNo;
+	}
+
+	public int getChUserNo() {
+		int chUserNo = 0;
+		try {
+			ResultSet rs = clsUser.getRecord(userBean);
+			if (rs.next()) {
+				chUserNo = rs.getInt(User.FLD_CHUSERNO);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return chUserNo;
+	}
+
+	public String getUserRole() {
+		String role = null;
+		try {
+			ResultSet rs = clsUser.getRecord(userBean);
+			if (rs.next()) {
+				role = rs.getString(User.FLD_ROLE);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return role;
 	}
 
 }

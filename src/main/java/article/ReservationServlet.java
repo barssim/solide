@@ -33,7 +33,8 @@ public class ReservationServlet extends HttpServlet {
 				resultMessage = SolideConstants.PLEASE_LOGIN;
 				request.setAttribute("Message", resultMessage);
 				getServletContext().getRequestDispatcher("/login.jsp").forward(request, response);
-			} else {
+			}
+			else {
 				articleBean.setArticleNo(Integer.parseInt(request.getSession().getAttribute("articleNo").toString()));
 				userBean.setUserName(request.getSession().getAttribute("loggedInUser").toString());
 				articleFacade = new ArticleFacade(null, userBean);
@@ -41,7 +42,7 @@ public class ReservationServlet extends HttpServlet {
 				if (articleFacade.getArticleStatus(articleBean) == RESERVED) {
 					resultMessage = SolideConstants.ARTICLE_IS_ALREADY_RESERVED;
 				} else {
-					if (articleFacade.changeArticleReservation(articleBean, userNo, RESERVED) > 0) {
+					if (articleFacade.changeArticleReservation(articleBean, userNo, RESERVED) == 0) {
 						resultMessage = SolideConstants.SUCCESSFULL_ARTICLE_RESERVED;
 					} else {
 						resultMessage = SolideConstants.UNSUCCESSFULL_ARTICLE_RESERVED;

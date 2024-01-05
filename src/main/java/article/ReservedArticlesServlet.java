@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import models.ArticleBean;
 import models.UserBean;
 
-public class MyReservedArticlesServlet extends HttpServlet {
+public class ReservedArticlesServlet extends HttpServlet {
 	/**
 	 * 
 	 */
@@ -34,7 +34,7 @@ public class MyReservedArticlesServlet extends HttpServlet {
 		}
 
 		request.setAttribute("myArticlesList", myArticlesList);
-		getServletContext().getRequestDispatcher("/myReservedArticles.jsp").forward(request, response);
+		getServletContext().getRequestDispatcher("/reservedArticles.jsp").forward(request, response);
 
 	}
 }

@@ -11,6 +11,7 @@ public class SolideConstants {
 	public static final String MESSAGE_TO_SEND = "Code d'enregistrement sur le site " + PROJECT;
 	public static final String CODE_INCORRECT = "le code que vous avez entr&eacute n'est pas correct! Veuiller entrer le code correct svp!";
 	public static final String WELCOMEON_SITE = "Bienvenue sur le site " + PROJECT + ",";
+	public static final String RECOMMANDER = " Veuillez recommander l'article maintenant";
 	public static final String USERNAME_INCORRECT = "Cet nom d'utilisateur n'existe pas, veuillez s'inscrire svp!";
 	public static final String PASSWORD_INCORRECT = "Mot de pass incorrect";
 	public static final String MORE_ATTEMP_TO_REGISTE = "le code que vous avez entr&eacute n'est pas correct!";
