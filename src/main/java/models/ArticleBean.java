@@ -1,6 +1,8 @@
 package models;
 
+import org.springframework.stereotype.Component;
 
+@Component
 public class ArticleBean {
   String articleName;
   int articleCategory;
