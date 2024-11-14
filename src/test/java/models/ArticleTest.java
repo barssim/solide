@@ -111,7 +111,7 @@ public class ArticleTest {
 
 		String sqlDelete = null;
 		PreparedStatement pstDelete = null;
-		sqlDelete = "delete from tb_article where NextNo = ? ";
+		sqlDelete = "delete from tb_norange where NextNo = ? ";
 		pstDelete = clsDB.getConnection().prepareStatement(sqlDelete);
 		pstDelete.setInt(1, NEXT_NO);
 		pstDelete.executeUpdate();

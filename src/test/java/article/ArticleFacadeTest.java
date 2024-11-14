@@ -28,7 +28,6 @@ import utils.ServerConfiguration;
  * @author Ahmed
  *
  */
-@Ignore
 public class ArticleFacadeTest {
 	public static ServerConfiguration clsConfig;
 	public static DatabaseClass clsDB;
@@ -166,7 +165,7 @@ public class ArticleFacadeTest {
 
 		// fetch the locNo corresponding to locationName
 
-		String sqlSrt = "select * from tb_article where noobj = ?  ";
+		String sqlSrt = "select * from tb_norange where noobj = ?  ";
 		PreparedStatement ps = clsDB.getConnection().prepareStatement(sqlSrt);
 		ps.setString(1, "Article");
 		ResultSet rs = ps.executeQuery();
